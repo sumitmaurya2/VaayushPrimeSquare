@@ -5,6 +5,7 @@ import primeSquareImage from "@/assets/prime-square-concept.webp";
 import collaborationImage from "@/assets/business-collaboration.webp";
 import constructionImage from "@/assets/construction-capabilities.webp";
 import { Button } from "@/components/ui/button";
+import { WEB3FORMS_ACCESS_KEY, WEB3FORMS_ENDPOINT } from "@/lib/web3forms";
 import { validateResumeFile } from "@/lib/resume-validation";
 import {
   FounderFeature,
@@ -198,7 +199,7 @@ function SiteFooter() {
               <br />
               <a href="tel:+918173834966">+91 8173834966</a>
               <br />
-              <a href="mailto:ayushmaurya123890@gmail.com">ayushmaurya123890@gmail.com</a>
+              <a href="mailto:vaayushconnect.in@gmail.com">vaayushconnect.in@gmail.com</a>
             </p>
           </div>
           <nav className="footer-links" aria-label="Website pages">
@@ -711,12 +712,46 @@ export function ContactPage() {
   const { category } = useSearch({ from: "/contact" });
   const initial = category ?? "General Enquiry";
   const [message, setMessage] = useState("");
-  function submit(event: FormEvent<HTMLFormElement>) {
+  const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!event.currentTarget.reportValidity()) return;
-    setMessage(
-      "This enquiry form is not connected yet, so your message has not been sent. Please contact us by phone or email.",
+    const form = event.currentTarget;
+    if (!form.reportValidity()) return;
+
+    setStatus("sending");
+    setMessage("");
+
+    const formData = new FormData(form);
+    formData.append("access_key", WEB3FORMS_ACCESS_KEY);
+    formData.set(
+      "subject",
+      String(formData.get("subject") || `Website enquiry: ${formData.get("category")}`),
     );
+
+    try {
+      const response = await fetch(WEB3FORMS_ENDPOINT, {
+        method: "POST",
+        body: formData,
+        headers: { Accept: "application/json" },
+      });
+      const result: { success?: boolean; message?: string } = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "The enquiry could not be sent. Please try again.");
+      }
+
+      setStatus("success");
+      setMessage("Thank you. Your enquiry has been sent, and our team will be in touch.");
+      form.reset();
+    } catch (error) {
+      setStatus("error");
+      setMessage(
+        error instanceof Error
+          ? `${error.message} You can also call or email us directly.`
+          : "We could not send your enquiry. Please call or email us directly.",
+      );
+    }
   }
   return (
     <>
@@ -728,7 +763,7 @@ export function ContactPage() {
         <div className="contact-details">
           <span>Palghar, Maharashtra, India</span>
           <a href="tel:+918173834966">+91 8173834966</a>
-          <a href="mailto:ayushmaurya123890@gmail.com">ayushmaurya123890@gmail.com</a>
+          <a href="mailto:vaayushconnect.in@gmail.com">vaayushconnect.in@gmail.com</a>
         </div>
       </PageHero>
       <section className="content-section section-white">
@@ -770,15 +805,25 @@ export function ContactPage() {
               <Field label="Message" wide required>
                 <textarea name="message" required />
               </Field>
+
+              {/* Spam trap: hidden from people, bots tick it and get blocked */}
+              <input
+                type="checkbox"
+                name="botcheck"
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                style={{ display: "none" }}
+              />
+
               <div className="field-wide">
-                <Button className="form-submit" type="submit">
-                  Submit Enquiry
+                <Button className="form-submit" type="submit" disabled={status === "sending"}>
+                  {status === "sending" ? "Sending…" : "Submit Enquiry"}
                 </Button>
               </div>
               <div className="field-wide">
-                <ReadinessNotice>
-                  {message ||
-                    "The enquiry form is being prepared for secure email delivery. Nothing is sent from this page yet."}
+                <ReadinessNotice tone={status === "error" ? "error" : "info"}>
+                  {status === "sending" ? "Sending your enquiry…" : message}
                 </ReadinessNotice>
               </div>
             </div>
@@ -830,7 +875,7 @@ export function CareersPage() {
     }
     setIsError(false);
     setMessage(
-      "The application form is not connected yet, so your details and resume have not been sent. Please email your application to ayushmaurya123890@gmail.com.",
+      "The application form is not connected yet, so your details and resume have not been sent. Please email your application to vaayushconnect.in@gmail.com.",
     );
   }
   return (
@@ -992,15 +1037,15 @@ const legalContent = {
     sections: [
       [
         "Information you choose to share",
-        "The website may invite visitors to provide contact and application details. The careers and enquiry forms are currently frontend demonstrations and are not connected to a submission service; information entered or selected is not sent or stored by this site.",
+        "The contact form sends the details you provide to VAAYUSH GROUP OF COMPANIES through Web3Forms so the team can respond to your enquiry. The careers form is not connected to a submission service; application details and resumes are not sent or stored by this site.",
       ],
       [
         "How information may be used",
-        "When an approved submission service is introduced, the final policy should explain why information is collected, how it is used, who may access it, and how long it is retained.",
+        "Contact details are used to review and respond to enquiries. The contact form is delivered through Web3Forms; please review its privacy information for details about its handling of submissions. This website does not store contact submissions.",
       ],
       [
         "Contact and updates",
-        "For questions about privacy, contact ayushmaurya123890@gmail.com. This draft must be updated to reflect the final approved information-handling practices.",
+        "For questions about privacy, contact vaayushconnect.in@gmail.com. This draft must be updated to reflect the final approved information-handling practices.",
       ],
     ],
   },
