@@ -1,0 +1,2 @@
+- Keep public pages as TanStack file routes, and share corporate navigation, footer, page sections, and form patterns through `src/components/site.tsx` so cross-page branding and visitor journeys stay consistent.
+- People shown on the site (founder, leadership, team) live in `src/data/team.ts` and render through `src/components/team.tsx`; add or reorder people there rather than editing page markup.
